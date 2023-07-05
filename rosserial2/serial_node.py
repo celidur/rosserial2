@@ -1,40 +1,4 @@
-#####################################################################
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2011, Willow Garage, Inc.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Willow Garage, Inc. nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
-__author__ = "mferguson@willowgarage.com (Michael Ferguson)"
-
 import array
-import multiprocessing
 import queue
 import importlib
 import struct
@@ -243,10 +207,10 @@ class typeRosBool(typeRos):
         return message
 
 
-
 def set_on_shutdown(on_shutdown):
     global _on_shutdown
     _on_shutdown = on_shutdown
+
 
 def _thread_spin_target():
     global _node, _on_shutdown
@@ -333,6 +297,7 @@ def load_message(package, message):
     m2 = getattr(m, 'msg')
     return getattr(m2, message)
 
+
 # TODO: implement
 # def load_service(package,service):
 #     s = load_pkg_module(package, 'srv')
@@ -398,8 +363,9 @@ class Subscriber:
             self.parent.send(self.id, t)
 
     def unregister(self):
-        _logger.warning("Removing subscriber: ", self.topic)
+        _logger.warning("Removing subscriber: " + self.topic)
         self.subscriber.unregister()
+
 
 # TODO: implement service client
 # class ServiceServer:
@@ -516,7 +482,8 @@ class SerialClient(object):
 
         set_on_shutdown(shutdown)
 
-        self.pub_diagnostics = _node.create_publisher(load_message("diagnostic_msgs","DiagnosticArray"), '/diagnostics',
+        self.pub_diagnostics = _node.create_publisher(load_message("diagnostic_msgs", "DiagnosticArray"),
+                                                      '/diagnostics',
                                                       rclpy.qos.QoSProfile(depth=10,
                                                                            history=rclpy.qos.HistoryPolicy.KEEP_LAST))
 
@@ -533,7 +500,7 @@ class SerialClient(object):
                     self.port = Serial(port, baud, timeout=self.timeout, write_timeout=10)
                     break
                 except SerialException as e:
-                    _logger.error("Error opening serial: %s"% e)
+                    _logger.error("Error opening serial: %s" % e)
                     time.sleep(3)
 
         if not rclpy.ok():
@@ -677,7 +644,7 @@ class SerialClient(object):
                 except IOError:
                     # self.sendDiagnostics(diagnostic_msgs.msg.DiagnosticStatus.ERROR, ERROR_PACKET_FAILED)
                     _logger.error("Packet Failed :  Failed to read msg data")
-                    _logger.error("expected msg length is %d"% msg_length)
+                    _logger.error("expected msg length is %d" % msg_length)
                     raise
 
                 # Reada checksum for topic id and msg
@@ -731,7 +698,7 @@ class SerialClient(object):
             self.setPublishSize(msg.buffer_size)
             _logger.info("Setup publisher on %s [%s]" % (msg.topic_name, msg.message_type))
         except Exception as e:
-            _logger.error("Creation of publisher failed: %s", e)
+            _logger.error("Creation of publisher failed: %s" % e)
 
     def setupSubscriber(self, data: bytes):
         """ Register a new subscriber. """
@@ -743,8 +710,8 @@ class SerialClient(object):
                 self.subscribers[msg.topic_name] = sub
                 self.setSubscribeSize(msg.buffer_size)
                 _logger.info("Setup subscriber on %s [%s]" % (msg.topic_name, msg.message_type))
-            elif msg.message_type != self.subscribers[msg.topic_name].message._type:
-                old_message_type = self.subscribers[msg.topic_name].message._type
+            elif msg.message_type != self.subscribers[msg.topic_name].manage._type:
+                old_message_type = self.subscribers[msg.topic_name].manage._type
                 self.subscribers[msg.topic_name].unregister()
                 sub = Subscriber(msg, self)
                 self.subscribers[msg.topic_name] = sub
@@ -964,7 +931,7 @@ class SerialClient(object):
 
     # TODO: implement
     def sendDiagnostics(self, level, msg_text):
-        _logger.error("\033[91m%s\033[0m" + "sendDiagnostics")
+        _logger.error("sendDiagnostics")
         # msg = diagnostic_msgs.msg.DiagnosticArray()
         # status = diagnostic_msgs.msg.DiagnosticStatus()
         # status.name = "rosserial_python"
@@ -1027,7 +994,7 @@ def main():
             time.sleep(1.0)
             continue
         except:
-            _logger.warning("Unexpected Error: %s", sys.exc_info()[0])
+            _logger.warning("Unexpected Error: %s" % sys.exc_info()[0])
             client.port.close()
             time.sleep(1.0)
             continue
