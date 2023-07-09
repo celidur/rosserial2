@@ -20,40 +20,43 @@ ERROR_NO_SYNC = "no sync with device"
 ERROR_PACKET_FAILED = "Packet Failed : Failed to read msg data"
 
 
-def getRosType(typeName, message_type):
-    if typeName == "Int8":
-        return typeRosInt8(message_type)
-    elif typeName == "Int16":
-        return typeRosInt16(message_type)
-    elif typeName == "Int32":
-        return typeRosInt32(message_type)
-    elif typeName == "Int64":
-        return typeRosInt64(message_type)
-    elif typeName == "UInt8":
-        return typeRosUInt8(message_type)
-    elif typeName == "UInt16":
-        return typeRosUInt16(message_type)
-    elif typeName == "UInt32":
-        return typeRosUInt32(message_type)
-    elif typeName == "UInt64":
-        return typeRosUInt64(message_type)
-    elif typeName == "Float32":
-        return typeRosFloat32(message_type)
-    elif typeName == "Float64":
-        return typeRosFloat64(message_type)
-    elif typeName == "String":
-        return typeRosString(message_type)
-    elif typeName == "Bool":
-        return typeRosBool(message_type)
-    else:
-        return typeRos(message_type, "", {})
+def getRosType(package, typeName, message_type):
+    if package == "std_msgs":
+        if typeName == "Int8":
+            return typeRosInt8(message_type)
+        elif typeName == "Int16":
+            return typeRosInt16(message_type)
+        elif typeName == "Int32":
+            return typeRosInt32(message_type)
+        elif typeName == "Int64":
+            return typeRosInt64(message_type)
+        elif typeName == "UInt8":
+            return typeRosUInt8(message_type)
+        elif typeName == "UInt16":
+            return typeRosUInt16(message_type)
+        elif typeName == "UInt32":
+            return typeRosUInt32(message_type)
+        elif typeName == "UInt64":
+            return typeRosUInt64(message_type)
+        elif typeName == "Float32":
+            return typeRosFloat32(message_type)
+        elif typeName == "Float64":
+            return typeRosFloat64(message_type)
+        elif typeName == "String":
+            return typeRosString(message_type)
+        elif typeName == "Bool":
+            return typeRosBool(message_type)
+    elif package == "sensor_msgs":
+        if typeName == "Imu":
+            return typeRosImu(message_type)
+
+    return typeRos(message_type, "")
 
 
 class typeRos:
-    def __init__(self, message_type, md5sum, data):
+    def __init__(self, message_type, md5sum):
         self._md5sum = md5sum
         self._type = message_type
-        self.data = data
 
     def serialize(self, message):
         return None
@@ -64,22 +67,31 @@ class typeRos:
 
 class typeRosInt8(typeRos):
     def __init__(self, message_type):
-        super().__init__(message_type, "27ffa0c9c4b8fb8492252bcad9e5c57b", {"data": 0})
+        super().__init__(message_type, "27ffa0c9c4b8fb8492252bcad9e5c57b")
+        self._data = 0
+        self._serialized = struct.pack('b', self._data)
 
     def serialize(self, message):
-        return struct.pack('b', message.data)
+        self._data = message.data
+        self._serialized = struct.pack('b', self._data)
+        return self._serialized
 
     def deserialize(self, data, message):
-        message.data = struct.unpack('b', data)[0]
+        self._data = struct.unpack('b', data)[0]
+        message.data = self._data
         return message
 
 
 class typeRosInt16(typeRos):
     def __init__(self, message_type):
-        super().__init__(message_type, "8524586e34fbd7cb1c08c5f5f1ca0e57", {"data": 0})
+        super().__init__(message_type, "8524586e34fbd7cb1c08c5f5f1ca0e57")
+        self._data = 0
+        self._serialized = struct.pack('h', self._data)
 
     def serialize(self, message):
-        return struct.pack('h', message.data)
+        self._data = message.data
+        self._serialized = struct.pack('h', self._data)
+        return self._serialized
 
     def deserialize(self, data, message):
         message.data = struct.unpack('h', data)[0]
@@ -206,6 +218,10 @@ class typeRosBool(typeRos):
         message.data = struct.unpack('?', data)[0]
         return message
 
+class typeRosImu(typeRos):
+    def __init__(self, message_type):
+        super().__init__(message_type, "6a62c6daae103f4ff57a132d6f95cec2", {"data": False})
+
 
 def set_on_shutdown(on_shutdown):
     global _on_shutdown
@@ -318,7 +334,7 @@ class Publisher:
 
         # find message type
         package, message = topic_info.message_type.split('/')
-        self.manage = getRosType(message, topic_info.message_type)
+        self.manage = getRosType(package,message, topic_info.message_type)
         self.message = load_message(package, message)
         if self.manage._md5sum == topic_info.md5sum:
             self.publisher = _node.create_publisher(
@@ -348,7 +364,7 @@ class Subscriber:
 
         # find message type
         package, message = topic_info.message_type.split('/')
-        self.manage = getRosType(message, topic_info.message_type)
+        self.manage = getRosType(package, message, topic_info.message_type)
         self.message = load_message(package, message)
         if self.manage._md5sum == topic_info.md5sum:
             self.subscriber = _node.create_subscription(self.message, self.topic, self.callback, 10,
