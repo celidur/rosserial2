@@ -1,4 +1,4 @@
-import std_msgs
+from .. import rosserial_std_msgs as std_msgs
 
 class NavSatStatus:
     def __init__(self):

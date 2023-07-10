@@ -1,10 +1,13 @@
 import sys
 import importlib
-import rosserial2.std_msgs as std_msgs
+import rosserial2.rosserial_sensor_msgs as sensor_msgs
+import rosserial2.rosserial_std_msgs  as std_msgs
 import rosserial2 as ros2
 
 
 def load_message(package, message):
+    if package == 'std_msgs' and message == "Time":
+        package = "builtin_interfaces"
     m = load_pkg_module(package, 'msg')
     m2 = getattr(m, 'msg')
     return getattr(m2, message)
@@ -44,13 +47,13 @@ def load_pkg_module(package, directory):
 
 def getRosType(package, typeName):
     try:
-        return eval(package + "." + typeName + "()")
+        return eval(""+package + "." + typeName + "()")
     except AttributeError:
         ros2._logger.error('The module "%s" was not found' % (package + "." + typeName))
         return None
 
 
-class rosType:
+class RosType:
     def __init__(self, package, typeName):
         self.message_serialized = getRosType(package, typeName)
         if self.message_serialized is None:
@@ -71,16 +74,15 @@ class rosType:
         for i in message:
             if isinstance(message[i], dict):
                 if name is None:
-                    name = i
+                    name_ = i
                 else:
-                    name = name + "." + i
-                self.set_message(message_type, message[i], name)
+                    name_ = name + "." + i
+                self.set_message(message_type, message[i], name_)
             else:
                 if name is None:
                     message_type.__setattr__(i, message[i])
                 else:
                     setattr(eval("message_type." + name), i, message[i])
-                    ros2._logger.info("2 : message_type." + name + "." + i + "=" + str(message[i]))
         return message_type
 
     def type(self):

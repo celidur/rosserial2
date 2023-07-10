@@ -10,7 +10,7 @@ class Int8:
             self.data = message.data
         return struct.pack('b', self.data)
 
-    def deserialize(self, data):  # return offset
+    def deserialize(self, data):
         self.data = struct.unpack('b', data[0:1])[0]
         return 1
 

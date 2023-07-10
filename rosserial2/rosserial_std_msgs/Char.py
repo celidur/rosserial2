@@ -1,11 +1,9 @@
-from typing import Union
-
-import std_msgs
+from .Int8 import Int8
 
 
 class Char:
     def __init__(self):
-        self.data = std_msgs.Int8()
+        self.data = Int8()
 
     def serialize(self, message=None):
         if message is not None:

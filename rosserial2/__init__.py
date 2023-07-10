@@ -3,10 +3,10 @@ import rclpy.logging
 import rclpy.qos
 import rclpy.qos_event
 import threading
-from serial import Serial, SerialException, SerialTimeoutException
+from serial import SerialException
 import time
 import sys
-from .serial_node import SerialClient
+from .SerialClient import SerialClient
 
 _node = None
 _logger = None

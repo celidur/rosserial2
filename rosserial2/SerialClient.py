@@ -5,7 +5,7 @@ import time
 import queue
 import array
 import rclpy
-from .type import load_message
+from .RosType import load_message
 import rosserial2 as ros2
 from .Subscriber import Subscriber
 from .Publisher import Publisher

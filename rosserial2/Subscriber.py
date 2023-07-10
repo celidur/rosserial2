@@ -1,4 +1,4 @@
-from .type import rosType
+from .RosType import RosType
 import rclpy
 import rosserial2 as ros2
 
@@ -14,7 +14,7 @@ class Subscriber:
 
         # find message type
         package, message = topic_info.message_type.data.split('/')
-        self.message = rosType(package, message)
+        self.message = RosType(package, message)
         if hash(self.message) == hash(topic_info):
             self.subscriber = ros2._node.create_subscription(self.message.message_type, self.topic, self.callback, 10,
                                                              event_callbacks=rclpy.qos_event.SubscriptionEventCallbacks())

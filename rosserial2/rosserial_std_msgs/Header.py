@@ -1,11 +1,12 @@
-import std_msgs
-
+from .String import String
+from .Time import Time
+from .UInt32 import UInt32
 
 class Header:
     def __init__(self):
-        self.seq = std_msgs.UInt32()
-        self.stamp = std_msgs.Time()
-        self.frame_id = std_msgs.Char
+        self.seq = UInt32()
+        self.stamp = Time()
+        self.frame_id = String()
 
     def serialize(self, message=None):
         if message is None:
@@ -23,11 +24,11 @@ class Header:
         return offset
 
     def __dict__(self):
-        return {'stamp': self.stamp.get_data(), 'frame_id': self.frame_id.data}
+        return {'stamp': self.stamp.__dict__(), 'frame_id': self.frame_id.data}
 
     def __set__(self, instance, value):
         self.stamp = value.stamp
         self.frame_id = value.frame_id
 
     def __hash__(self):
-        return 0x1bf77f25acecdedba0e224b162199717
+        return 0x2176decaecbce78abc3b96ef049fabed

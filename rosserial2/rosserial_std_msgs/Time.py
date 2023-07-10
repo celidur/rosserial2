@@ -1,9 +1,9 @@
-import std_msgs
+from .UInt32 import UInt32
 
 class Time:
     def __init__(self):
-        self.sec = std_msgs.UInt32()
-        self.nanosec = std_msgs.UInt32()
+        self.sec = UInt32()
+        self.nanosec = UInt32()
 
     def serialize(self, message=None):
         if message is not None:

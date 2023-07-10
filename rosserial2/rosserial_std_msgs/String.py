@@ -1,5 +1,4 @@
-from rosserial2.UInt32 import UInt32
-import rosserial2 as ros2
+from .UInt32 import UInt32
 
 class String:
     def __init__(self):

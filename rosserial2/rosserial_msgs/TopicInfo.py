@@ -1,5 +1,5 @@
 import rosserial2 as ros2
-import rosserial2.std_msgs as std_msgs
+from .. import rosserial_std_msgs as std_msgs
 
 
 class TopicInfo:
