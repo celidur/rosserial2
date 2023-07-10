@@ -9,6 +9,7 @@ def load_message(package, message):
     m2 = getattr(m, 'msg')
     return getattr(m2, message)
 
+
 def import_module(module_name, module_dir=None):
     """
         desc
@@ -43,9 +44,9 @@ def load_pkg_module(package, directory):
 
 def getRosType(package, typeName):
     try:
-        return eval(package+"."+typeName+"()")
+        return eval(package + "." + typeName + "()")
     except AttributeError:
-        ros2._logger.error('The module "%s" was not found' % (package+"."+typeName))
+        ros2._logger.error('The module "%s" was not found' % (package + "." + typeName))
         return None
 
 
@@ -63,7 +64,24 @@ class rosType:
 
     def deserialize(self, data):
         self.message_serialized.deserialize(data)
-        return self.message_serialized.set_message_data(self.message_type())
+        message_type = self.message_type()
+        return self.set_message(message_type, self.message_serialized.__dict__())
+
+    def set_message(self, message_type, message, name=None):
+        for i in message:
+            if isinstance(message[i], dict):
+                if name is None:
+                    name = i
+                else:
+                    name = name + "." + i
+                self.set_message(message_type, message[i], name)
+            else:
+                if name is None:
+                    message_type.__setattr__(i, message[i])
+                else:
+                    setattr(eval("message_type." + name), i, message[i])
+                    ros2._logger.info("2 : message_type." + name + "." + i + "=" + str(message[i]))
+        return message_type
 
     def type(self):
         return self._type

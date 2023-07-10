@@ -5,47 +5,15 @@ import time
 import queue
 import array
 import rclpy
-from .type import load_message, rosType
+from .type import load_message
 import rosserial2 as ros2
-
-import rosserial2.std_msgs as std_msgs
+from .Subscriber import Subscriber
+from .Publisher import Publisher
+from .rosserial_msgs import TopicInfo
 
 ERROR_MISMATCHED_PROTOCOL = "Mismatched protocol version in packet: lost sync or rosserial_python is from different ros release than the rosserial client"
 ERROR_NO_SYNC = "no sync with device"
 ERROR_PACKET_FAILED = "Packet Failed : Failed to read msg data"
-
-
-class TopicInfo:
-    ID_PUBLISHER = 0
-    ID_SUBSCRIBER = 1
-    ID_SERVICE_SERVER = 2
-    ID_SERVICE_CLIENT = 4
-    ID_PARAMETER_REQUEST = 6
-    ID_LOG = 7
-    ID_TIME = 10
-    ID_TX_STOP = 11
-
-    def __init__(self):
-        self.topic_id = std_msgs.UInt16()
-        self.topic_name = std_msgs.String()
-        self.message_type = std_msgs.String()
-        self.md5sum = std_msgs.String()
-        self.buffer_size = std_msgs.UInt32()
-
-    def serialize(self):
-        ros2._logger.warning('it is not implemented')
-
-    def deserialize(self, data):
-        offset = 0
-        offset += self.topic_id.deserialize(data[offset:])
-        offset += self.topic_name.deserialize(data[offset:])
-        offset += self.message_type.deserialize(data[offset:])
-        offset += self.md5sum.deserialize(data[offset:])
-        offset += self.buffer_size.deserialize(data[offset:])
-        return offset
-
-    def __hash__(self):
-        return int("0x" + self.md5sum.data, 16)
 
 
 # TODO: implement
@@ -56,63 +24,6 @@ class TopicInfo:
 #     mreq = getattr(s, service+"Request")
 #     mres = getattr(s, service+"Response")
 #     return srv,mreq,mres
-
-class Publisher:
-    """
-        Publisher forwards messages from the serial device to ROS.
-    """
-
-    def __init__(self, topic_info):
-        """ Create a new publisher. """
-        self.topic = topic_info.topic_name.data
-        # find message type
-        package, message = topic_info.message_type.data.split('/')
-        # self.manage = getRosType(package, message, topic_info.message_type)
-        self.message = rosType(package, message)
-
-        if hash(self.message) == hash(topic_info):
-            self.publisher = ros2._node.create_publisher(
-                self.message.message_type,
-                self.topic,
-                rclpy.qos.QoSProfile(depth=10, history=rclpy.qos.HistoryPolicy.KEEP_LAST)
-            )
-        else:
-            ros2._logger.warning('This type is not implemented : ' + topic_info.message_type.data)
-
-    def handlePacket(self, data):
-        """ Forward message to ROS network. """
-        self.publisher.publish(self.message.deserialize(data))
-
-
-class Subscriber:
-    """
-        Subscriber forwards messages from ROS to the serial device.
-    """
-
-    def __init__(self, topic_info, parent):
-        self.topic = topic_info.topic_name.data
-        self.id = topic_info.topic_id.data
-        self.parent = parent
-
-        # find message type
-        package, message = topic_info.message_type.data.split('/')
-        self.message = rosType(package, message)
-        if hash(self.message) == hash(topic_info):
-            self.subscriber = ros2._node.create_subscription(self.message.message_type, self.topic, self.callback, 10,
-                                                             event_callbacks=rclpy.qos_event.SubscriptionEventCallbacks())
-        else:
-            ros2._logger.warning('This type is not implemented : ' + topic_info.message_type.data)
-
-    def callback(self, msg):
-        """ Forward message to serial device. """
-        t = self.message.serialize(msg)
-        if t is not None:
-            self.parent.send(self.id, t)
-
-    def unregister(self):
-        ros2._logger.warning("Removing subscriber: " + self.topic)
-        self.subscriber.unregister()
-
 
 # TODO: implement service client
 # class ServiceServer:

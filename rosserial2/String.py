@@ -6,7 +6,9 @@ class String:
         self.len = UInt32()
         self.data = ""
 
-    def serialize(self, message):
+    def serialize(self, message=None):
+        if message is None:
+            message = self
         return self.len.serialize(len(message.data)) + message.data.encode('utf-8')
 
     def deserialize(self, data):
@@ -17,12 +19,11 @@ class String:
         offset = offset + size
         return offset
 
-    def get_data(self):
-        return self.data
+    def __dict__(self):
+        return {'data': self.data}
 
-    def set_message_data(self, message):
-        message.data = self.data
-        return message
+    def __set__(self, instance, value):
+        self.data = value.data
 
     def __hash__(self):
         return 0x992ce8a1687cec8c8bd883ec73ca41d1
