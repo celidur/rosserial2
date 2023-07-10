@@ -1,254 +1,18 @@
-import array
-import queue
-import importlib
 import struct
-import sys
 import threading
+from serial import SerialException, Serial, SerialTimeoutException
 import time
-from serial import Serial, SerialException, SerialTimeoutException
+import queue
+import array
 import rclpy
-import rclpy.logging
-import rclpy.qos
-import rclpy.qos_event
+from .type import load_message, rosType
+import rosserial2 as ros2
 
-_node = None
-_logger = None
-_on_shutdown = None
+import rosserial2.std_msgs as std_msgs
 
 ERROR_MISMATCHED_PROTOCOL = "Mismatched protocol version in packet: lost sync or rosserial_python is from different ros release than the rosserial client"
 ERROR_NO_SYNC = "no sync with device"
 ERROR_PACKET_FAILED = "Packet Failed : Failed to read msg data"
-
-
-def getRosType(package, typeName, message_type):
-    if package == "std_msgs":
-        if typeName == "Int8":
-            return typeRosInt8(message_type)
-        elif typeName == "Int16":
-            return typeRosInt16(message_type)
-        elif typeName == "Int32":
-            return typeRosInt32(message_type)
-        elif typeName == "Int64":
-            return typeRosInt64(message_type)
-        elif typeName == "UInt8":
-            return typeRosUInt8(message_type)
-        elif typeName == "UInt16":
-            return typeRosUInt16(message_type)
-        elif typeName == "UInt32":
-            return typeRosUInt32(message_type)
-        elif typeName == "UInt64":
-            return typeRosUInt64(message_type)
-        elif typeName == "Float32":
-            return typeRosFloat32(message_type)
-        elif typeName == "Float64":
-            return typeRosFloat64(message_type)
-        elif typeName == "String":
-            return typeRosString(message_type)
-        elif typeName == "Bool":
-            return typeRosBool(message_type)
-    elif package == "sensor_msgs":
-        if typeName == "Imu":
-            return typeRosImu(message_type)
-
-    return typeRos(message_type, "")
-
-
-class typeRos:
-    def __init__(self, message_type, md5sum):
-        self._md5sum = md5sum
-        self._type = message_type
-
-    def serialize(self, message):
-        return None
-
-    def deserialize(self, data, message):
-        return None
-
-
-class typeRosInt8(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "27ffa0c9c4b8fb8492252bcad9e5c57b")
-        self._data = 0
-        self._serialized = struct.pack('b', self._data)
-
-    def serialize(self, message):
-        self._data = message.data
-        self._serialized = struct.pack('b', self._data)
-        return self._serialized
-
-    def deserialize(self, data, message):
-        self._data = struct.unpack('b', data)[0]
-        message.data = self._data
-        return message
-
-
-class typeRosInt16(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "8524586e34fbd7cb1c08c5f5f1ca0e57")
-        self._data = 0
-        self._serialized = struct.pack('h', self._data)
-
-    def serialize(self, message):
-        self._data = message.data
-        self._serialized = struct.pack('h', self._data)
-        return self._serialized
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('h', data)[0]
-        return message
-
-
-class typeRosInt32(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "da5909fbe378aeaf85e547e830cc1bb7", {"data": 0})
-
-    def serialize(self, message):
-        return struct.pack('i', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('i', data)[0]
-        return message
-
-
-class typeRosInt64(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "34add168574510e6e17f5d23ecc077ef", {"data": 0})
-
-    def serialize(self, message):
-        return struct.pack('q', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('q', data)[0]
-        return message
-
-
-class typeRosUInt8(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "7c8164229e7d2c17eb95e9231617fdee", {"data": 0})
-
-    def serialize(self, message):
-        return struct.pack('B', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('B', data)[0]
-        return message
-
-
-class typeRosUInt16(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "1df79edf208b629fe6b81923a544552d", {"data": 0})
-
-    def serialize(self, message):
-        return struct.pack('H', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('H', data)[0]
-        return message
-
-
-class typeRosUInt32(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "304a39449588c7f8ce2df6e8001c5fce", {"data": 0})
-
-    def serialize(self, message):
-        return struct.pack('I', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('I', data)[0]
-        return message
-
-
-class typeRosUInt64(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "1b2a79973e8bf53d7b53acb71299cb57", {"data": 0})
-
-    def serialize(self, message):
-        return struct.pack('Q', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('Q', data)[0]
-        return message
-
-
-class typeRosFloat32(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "73fcbf46b49191e672908e50842a83d4", {"data": 0})
-
-    def serialize(self, message):
-        return struct.pack('f', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('f', data)[0]
-        return message
-
-
-class typeRosFloat64(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "fdb28210bfa9d7c91146260178d9a584", {"data": 0})
-
-    def serialize(self, message):
-        return struct.pack('d', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('d', data)[0]
-        return message
-
-
-class typeRosString(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "992ce8a1687cec8c8bd883ec73ca41d1", {"data": ""})
-
-    def serialize(self, message):
-        length = len(message.data)
-        return struct.pack('I', length) + message.data.encode('utf-8')
-
-    def deserialize(self, data, message):
-        message.data = data[4:].decode('utf-8')
-        return message
-
-
-class typeRosBool(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "8b94c1b53db61fb6aed406028ad6332a", {"data": False})
-
-    def serialize(self, message):
-        return struct.pack('?', message.data)
-
-    def deserialize(self, data, message):
-        message.data = struct.unpack('?', data)[0]
-        return message
-
-class typeRosImu(typeRos):
-    def __init__(self, message_type):
-        super().__init__(message_type, "6a62c6daae103f4ff57a132d6f95cec2", {"data": False})
-
-
-def set_on_shutdown(on_shutdown):
-    global _on_shutdown
-    _on_shutdown = on_shutdown
-
-
-def _thread_spin_target():
-    global _node, _on_shutdown
-    rclpy.spin(_node)
-    if _on_shutdown:
-        _on_shutdown()
-
-
-def import_module(module_name, module_dir=None):
-    """
-        desc
-    """
-    if module_dir:
-        sys.path.insert(0, module_dir)
-    try:
-        module = importlib.import_module(module_name)
-    except:
-        raise "File not found"
-    finally:
-        if module_dir:
-            sys.path.pop(0)
-        return module
 
 
 class TopicInfo:
@@ -262,56 +26,26 @@ class TopicInfo:
     ID_TX_STOP = 11
 
     def __init__(self):
-        self.topic_id = 0
-        self.topic_name = ""
-        self.message_type = ""
-        self.md5sum = ""
-        self.buffer_size = 0
+        self.topic_id = std_msgs.UInt16()
+        self.topic_name = std_msgs.String()
+        self.message_type = std_msgs.String()
+        self.md5sum = std_msgs.String()
+        self.buffer_size = std_msgs.UInt32()
 
     def serialize(self):
-        _logger.warning('it is not implemented')
+        ros2._logger.warning('it is not implemented')
 
     def deserialize(self, data):
         offset = 0
-        self.topic_id = struct.unpack('h', data[offset:offset + 2])[0]
-        offset += 2
-        length_topic_name = struct.unpack('i', data[offset:offset + 4])[0]
-        offset += 4
-        self.topic_name = data[offset:offset + length_topic_name].decode('utf-8')
-        offset += length_topic_name
-        length_message_type = struct.unpack('i', data[offset:offset + 4])[0]
-        offset += 4
-        self.message_type = data[offset:offset + length_message_type].decode('utf-8')
-        offset += length_message_type
-        length_md5sum = struct.unpack('i', data[offset:offset + 4])[0]
-        offset += 4
-        self.md5sum = data[offset:offset + length_md5sum].decode('utf-8')
-        offset += length_md5sum
-        self.buffer_size = struct.unpack('i', data[offset:offset + 4])[0]
-        offset += 4
+        offset += self.topic_id.deserialize(data[offset:])
+        offset += self.topic_name.deserialize(data[offset:])
+        offset += self.message_type.deserialize(data[offset:])
+        offset += self.md5sum.deserialize(data[offset:])
+        offset += self.buffer_size.deserialize(data[offset:])
         return offset
 
-
-def load_pkg_module(package, directory):
-    # check if its in the python path
-    path = sys.path
-    try:
-        importlib.import_module(package)
-    except ImportError:
-        pass
-    try:
-        m = __import__(package + '.' + directory)
-    except ImportError:
-        _logger.error("Cannot import package : %s" % package)
-        _logger.error("sys.path was " + str(path))
-        return None
-    return m
-
-
-def load_message(package, message):
-    m = load_pkg_module(package, 'msg')
-    m2 = getattr(m, 'msg')
-    return getattr(m2, message)
+    def __hash__(self):
+        return int("0x" + self.md5sum.data, 16)
 
 
 # TODO: implement
@@ -330,26 +64,24 @@ class Publisher:
 
     def __init__(self, topic_info):
         """ Create a new publisher. """
-        self.topic = topic_info.topic_name
-
+        self.topic = topic_info.topic_name.data
         # find message type
-        package, message = topic_info.message_type.split('/')
-        self.manage = getRosType(package,message, topic_info.message_type)
-        self.message = load_message(package, message)
-        if self.manage._md5sum == topic_info.md5sum:
-            self.publisher = _node.create_publisher(
-                self.message,
+        package, message = topic_info.message_type.data.split('/')
+        # self.manage = getRosType(package, message, topic_info.message_type)
+        self.message = rosType(package, message)
+
+        if hash(self.message) == hash(topic_info):
+            self.publisher = ros2._node.create_publisher(
+                self.message.message_type,
                 self.topic,
                 rclpy.qos.QoSProfile(depth=10, history=rclpy.qos.HistoryPolicy.KEEP_LAST)
             )
         else:
-            _logger.warning('This type is not implemented : ' + topic_info.message_type)
+            ros2._logger.warning('This type is not implemented : ' + topic_info.message_type.data)
 
     def handlePacket(self, data):
         """ Forward message to ROS network. """
-        t = self.manage.deserialize(data, self.message())
-        if t is not None:
-            self.publisher.publish(t)
+        self.publisher.publish(self.message.deserialize(data))
 
 
 class Subscriber:
@@ -358,28 +90,27 @@ class Subscriber:
     """
 
     def __init__(self, topic_info, parent):
-        self.topic = topic_info.topic_name
-        self.id = topic_info.topic_id
+        self.topic = topic_info.topic_name.data
+        self.id = topic_info.topic_id.data
         self.parent = parent
 
         # find message type
-        package, message = topic_info.message_type.split('/')
-        self.manage = getRosType(package, message, topic_info.message_type)
-        self.message = load_message(package, message)
-        if self.manage._md5sum == topic_info.md5sum:
-            self.subscriber = _node.create_subscription(self.message, self.topic, self.callback, 10,
-                                                        event_callbacks=rclpy.qos_event.SubscriptionEventCallbacks())
+        package, message = topic_info.message_type.data.split('/')
+        self.message = rosType(package, message)
+        if hash(self.message) == hash(topic_info):
+            self.subscriber = ros2._node.create_subscription(self.message.message_type, self.topic, self.callback, 10,
+                                                             event_callbacks=rclpy.qos_event.SubscriptionEventCallbacks())
         else:
-            _logger.warning('This type is not implemented : ' + topic_info.message_type)
+            ros2._logger.warning('This type is not implemented : ' + topic_info.message_type.data)
 
     def callback(self, msg):
         """ Forward message to serial device. """
-        t = self.manage.serialize(msg)
+        t = self.message.serialize(msg)
         if t is not None:
             self.parent.send(self.id, t)
 
     def unregister(self):
-        _logger.warning("Removing subscriber: " + self.topic)
+        ros2._logger.warning("Removing subscriber: " + self.topic)
         self.subscriber.unregister()
 
 
@@ -473,7 +204,6 @@ class SerialClient(object):
 
     def __init__(self, port=None, baud=500000, timeout=5.0):
         """ Initialize node, connect to bus, attempt to negotiate topics. """
-
         self.read_lock = threading.RLock()
 
         self.write_lock = threading.RLock()
@@ -494,14 +224,14 @@ class SerialClient(object):
 
         def shutdown():
             self.txStopRequest()
-            _logger.info('shutdown hook activated')
+            ros2._logger.info('shutdown hook activated')
 
-        set_on_shutdown(shutdown)
+        ros2._on_shutdown = shutdown
 
-        self.pub_diagnostics = _node.create_publisher(load_message("diagnostic_msgs", "DiagnosticArray"),
-                                                      '/diagnostics',
-                                                      rclpy.qos.QoSProfile(depth=10,
-                                                                           history=rclpy.qos.HistoryPolicy.KEEP_LAST))
+        self.pub_diagnostics = ros2._node.create_publisher(load_message("diagnostic_msgs", "DiagnosticArray"),
+                                                           '/diagnostics',
+                                                           rclpy.qos.QoSProfile(depth=10,
+                                                                                history=rclpy.qos.HistoryPolicy.KEEP_LAST))
 
         if port is None:
             # no port specified, listen for any new port?
@@ -516,7 +246,7 @@ class SerialClient(object):
                     self.port = Serial(port, baud, timeout=self.timeout, write_timeout=10)
                     break
                 except SerialException as e:
-                    _logger.error("Error opening serial: %s" % e)
+                    ros2._logger.error("Error opening serial: %s" % e)
                     time.sleep(3)
 
         if not rclpy.ok():
@@ -547,7 +277,7 @@ class SerialClient(object):
 
     def requestTopics(self):
         """ Determine topics to subscribe/publish. """
-        _logger.info('Requesting topics...')
+        ros2._logger.info('Requesting topics...')
 
         # request topic sync
         self.write_queue.put(self.header + self.protocol_ver + b"\x00\x00\xff\x00\x00\xff")
@@ -556,7 +286,7 @@ class SerialClient(object):
         """ Send stop tx request to client before the node exits. """
 
         self.write_queue.put(self.header + self.protocol_ver + b"\x00\x00\xff\x0b\x00\xf4")
-        _logger.info("Sending tx stop request")
+        ros2._logger.info("Sending tx stop request")
 
     def tryRead(self, length):
         try:
@@ -593,9 +323,9 @@ class SerialClient(object):
         while rclpy.ok():
             if (time.time() - self.lastsync) > (self.timeout * 3):
                 if self.synced:
-                    _logger.error("Lost sync with device, restarting...")
+                    ros2._logger.error("Lost sync with device, restarting...")
                 else:
-                    _logger.error(
+                    ros2._logger.error(
                         "Unable to sync with device; possible link problem or link software version mismatch such as hydro rosserial_python with groovy Arduino")
                 self.lastsync_lost = time.time()
                 # self.sendDiagnostics(diagnostic_msgs.msg.DiagnosticStatus.ERROR, ERROR_NO_SYNC)
@@ -623,7 +353,7 @@ class SerialClient(object):
                 flag[1] = self.tryRead(1)
                 if flag[1] != self.protocol_ver:
                     # self.sendDiagnostics(diagnostic_msgs.msg.DiagnosticStatus.ERROR, ERROR_MISMATCHED_PROTOCOL)
-                    _logger.error(
+                    ros2._logger.error(
                         "Mismatched protocol version in packet (%s): lost sync or rosserial_python is from different ros release than the rosserial client" % repr(
                             flag[1]))
                     protocol_ver_msgs = {
@@ -635,7 +365,7 @@ class SerialClient(object):
                         found_ver_msg = 'Protocol version of client is ' + protocol_ver_msgs[flag[1]]
                     else:
                         found_ver_msg = "Protocol version of client is unrecognized"
-                    _logger.error("%s, expected %s" % (found_ver_msg, protocol_ver_msgs[self.protocol_ver]))
+                    ros2._logger.error("%s, expected %s" % (found_ver_msg, protocol_ver_msgs[self.protocol_ver]))
                     continue
 
                 # Read message length, checksum (3 bytes)
@@ -645,7 +375,7 @@ class SerialClient(object):
 
                 # Validate message length checksum.
                 if sum(array.array("B", msg_len_bytes)) % 256 != 255:
-                    _logger.error("Wrong checksum for msg length, length %d, dropping message." % (msg_length))
+                    ros2._logger.error("Wrong checksum for msg length, length %d, dropping message." % (msg_length))
                     continue
 
                 # Read topic id (2 bytes)
@@ -659,8 +389,8 @@ class SerialClient(object):
                     msg = self.tryRead(msg_length)
                 except IOError:
                     # self.sendDiagnostics(diagnostic_msgs.msg.DiagnosticStatus.ERROR, ERROR_PACKET_FAILED)
-                    _logger.error("Packet Failed :  Failed to read msg data")
-                    _logger.error("expected msg length is %d" % msg_length)
+                    ros2._logger.error("Packet Failed :  Failed to read msg data")
+                    ros2._logger.error("expected msg length is %d" % msg_length)
                     raise
 
                 # Reada checksum for topic id and msg
@@ -675,15 +405,17 @@ class SerialClient(object):
                     try:
                         self.callbacks[topic_id](msg)
                     except KeyError:
-                        _logger.warning("Tried to publish before configured, topic id %d" % topic_id)
+                        ros2._logger.warning("Tried to publish before configured, topic id %d" % topic_id)
                         self.requestTopics()
+                    except Exception as e:
+                        ros2._logger.error("Error during deserialization of topic id %d: %s" % (topic_id, e))
                     time.sleep(0.001)
                 else:
-                    _logger.error("wrong checksum for topic id and msg")
+                    ros2._logger.error("wrong checksum for topic id and msg")
 
             except IOError as exc:
-                _logger.error('Last read step: %s' % read_step)
-                _logger.error('Run loop error: %s' % exc)
+                ros2._logger.error('Last read step: %s' % read_step)
+                ros2._logger.error('Run loop error: %s' % exc)
                 # One of the read calls had an issue. Just to be safe, request that the client
                 # reinitialize their topics.
                 with self.read_lock:
@@ -696,12 +428,12 @@ class SerialClient(object):
     def setPublishSize(self, size):
         if self.buffer_out < 0:
             self.buffer_out = size
-            _logger.info("Note: publish buffer size is %d bytes" % self.buffer_out)
+            ros2._logger.info("Note: publish buffer size is %d bytes" % self.buffer_out)
 
     def setSubscribeSize(self, size):
         if self.buffer_in < 0:
             self.buffer_in = size
-            _logger.info("Note: subscribe buffer size is %d bytes" % self.buffer_in)
+            ros2._logger.info("Note: subscribe buffer size is %d bytes" % self.buffer_in)
 
     def setupPublisher(self, data: bytes):
         """ Register a new publisher. """
@@ -709,38 +441,38 @@ class SerialClient(object):
             msg = TopicInfo()
             msg.deserialize(data)
             pub = Publisher(msg)
-            self.publishers[msg.topic_id] = pub
-            self.callbacks[msg.topic_id] = pub.handlePacket
-            self.setPublishSize(msg.buffer_size)
-            _logger.info("Setup publisher on %s [%s]" % (msg.topic_name, msg.message_type))
+            self.publishers[msg.topic_id.data] = pub
+            self.callbacks[msg.topic_id.data] = pub.handlePacket
+            self.setPublishSize(msg.buffer_size.data)
+            ros2._logger.info("Setup publisher on %s [%s]" % (msg.topic_name.data, msg.message_type.data))
         except Exception as e:
-            _logger.error("Creation of publisher failed: %s" % e)
+            ros2._logger.error("Creation of publisher failed: %s" % e)
 
     def setupSubscriber(self, data: bytes):
         """ Register a new subscriber. """
         try:
             msg = TopicInfo()
             msg.deserialize(data)
-            if not msg.topic_name in list(self.subscribers.keys()):
+            if not msg.topic_name.data in list(self.subscribers.keys()):
                 sub = Subscriber(msg, self)
-                self.subscribers[msg.topic_name] = sub
-                self.setSubscribeSize(msg.buffer_size)
-                _logger.info("Setup subscriber on %s [%s]" % (msg.topic_name, msg.message_type))
-            elif msg.message_type != self.subscribers[msg.topic_name].manage._type:
-                old_message_type = self.subscribers[msg.topic_name].manage._type
-                self.subscribers[msg.topic_name].unregister()
+                self.subscribers[msg.topic_name.data] = sub
+                self.setSubscribeSize(msg.buffer_size.data)
+                ros2._logger.info("Setup subscriber on %s [%s]" % (msg.topic_name.data, msg.message_type.data))
+            elif msg.message_type.data != self.subscribers[msg.topic_name].message.type():
+                old_message_type = self.subscribers[msg.topic_name.data].manage._type
+                self.subscribers[msg.topic_name.data].unregister()
                 sub = Subscriber(msg, self)
-                self.subscribers[msg.topic_name] = sub
-                self.setSubscribeSize(msg.buffer_size)
-                _logger.info("Change the message type of subscriber on %s from [%s] to [%s]" % (
-                    msg.topic_name, old_message_type, msg.message_type))
+                self.subscribers[msg.topic_name.data] = sub
+                self.setSubscribeSize(msg.buffer_size.data)
+                ros2._logger.info("Change the message type of subscriber on %s from [%s] to [%s]" % (
+                    msg.topic_name.data, old_message_type, msg.message_type.data))
         except Exception as e:
-            _logger.error("Creation of subscriber failed: %s", e)
+            ros2._logger.error("Creation of subscriber failed: %s", e)
 
     # TODO: implement
     def setupServiceServerPublisher(self, data: bytes):
         """ Register a new service server. """
-        _logger.error("setupServiceServerPublisher")
+        ros2._logger.error("setupServiceServerPublisher")
         # try:
         #     msg = TopicInfo()
         #     msg.deserialize(data)
@@ -761,7 +493,7 @@ class SerialClient(object):
     # TODO: implement
     def setupServiceServerSubscriber(self, data: bytes):
         """ Register a new service server. """
-        _logger.error("setupServiceServerSubscriber")
+        ros2._logger.error("setupServiceServerSubscriber")
         # try:
         #     msg = TopicInfo()
         #     msg.deserialize(data)
@@ -782,7 +514,7 @@ class SerialClient(object):
     # TODO: implement
     def setupServiceClientPublisher(self, data: bytes):
         """ Register a new service client. """
-        _logger.error("setupServiceClientPublisher")
+        ros2._logger.error("setupServiceClientPublisher")
         # try:
         #     msg = TopicInfo()
         #     msg.deserialize(data)
@@ -803,7 +535,7 @@ class SerialClient(object):
     # TODO: implement
     def setupServiceClientSubscriber(self, data: bytes):
         """ Register a new service client. """
-        _logger.error("setupServiceClientSubscriber")
+        ros2._logger.error("setupServiceClientSubscriber")
         # try:
         #     msg = TopicInfo()
         #     msg.deserialize(data)
@@ -831,7 +563,7 @@ class SerialClient(object):
     # TODO: implement
     def handleParameterRequest(self, data: bytes):
         """ Send parameters to device. Supports only simple datatypes and arrays of such. """
-        _logger.error("handleParameterRequest")
+        ros2._logger.error("handleParameterRequest")
         # req = RequestParamRequest()
         # req.deserialize(data)
         # resp = RequestParamResponse()
@@ -869,7 +601,7 @@ class SerialClient(object):
     # TODO: implement
     def handleLoggingRequest(self, data: bytes):
         """ Forward logging information from serial device into ROS. """
-        _logger.error("handleLoggingRequest :" + str(data))
+        ros2._logger.error("handleLoggingRequest :" + str(data))
         # msg = Log()
         # msg.deserialize(data)
         # if msg.level == Log.ROSDEBUG:
@@ -903,7 +635,7 @@ class SerialClient(object):
         """
         length = len(msg_bytes)
         if self.buffer_in > 0 and length > self.buffer_in:
-            _logger.error("Message from ROS network dropped: message larger than buffer.\n%s" % msg_bytes)
+            ros2._logger.error("Message from ROS network dropped: message larger than buffer.\n%s" % msg_bytes)
             return -1
         else:
             # frame : header (1b) + version (1b) + msg_len(2b) + msg_len_chk(1b) + topic_id(2b) + msg(nb) + msg_topic_id_chk(1b)
@@ -936,18 +668,18 @@ class SerialClient(object):
                         elif isinstance(data, bytes):
                             self._write(data)
                         else:
-                            _logger.error("Trying to write invalid data type: %s" % type(data))
+                            ros2._logger.error("Trying to write invalid data type: %s" % type(data))
                         break
                     except SerialTimeoutException as exc:
-                        _logger.error('Write timeout: %s' % exc)
+                        ros2._logger.error('Write timeout: %s' % exc)
                         time.sleep(1)
                     except RuntimeError as exc:
-                        _logger.error('Write thread exception: %s' % exc)
+                        ros2._logger.error('Write thread exception: %s' % exc)
                         break
 
     # TODO: implement
     def sendDiagnostics(self, level, msg_text):
-        _logger.error("sendDiagnostics")
+        ros2._logger.error("sendDiagnostics")
         # msg = diagnostic_msgs.msg.DiagnosticArray()
         # status = diagnostic_msgs.msg.DiagnosticStatus()
         # status.name = "rosserial_python"
@@ -969,52 +701,3 @@ class SerialClient(object):
         # status.values[1].value = time.ctime(self.lastsync_lost.to_sec())
         #
         # self.pub_diagnostics.publish(msg)
-
-
-def main():
-    global _node, _logger
-    rclpy.init()
-    _node = rclpy.create_node(
-        "serial_node",
-        allow_undeclared_parameters=True,
-        automatically_declare_parameters_from_overrides=True,
-    )
-
-    _logger = _node.get_logger()
-    rclpy.logging.set_logger_level(_logger.name, rclpy.logging.LoggingSeverity.INFO)
-    _thread_spin = threading.Thread(target=_thread_spin_target, daemon=True)
-    _thread_spin.start()
-    _logger.info("ROS Serial Python Node")
-
-    port = '/dev/ttyUSB0'
-    if not _node.has_parameter("port"):
-        _node.declare_parameter("port", port)
-    port = _node.get_parameter("port")._value
-
-    baud = '500_000'
-    if not _node.has_parameter("baud"):
-        _node.declare_parameter("baud", baud)
-    baud = int(_node.get_parameter("baud")._value)
-
-    while rclpy.ok():
-        _logger.info("Connecting to %s at %d baud" % (port, baud))
-        try:
-            client = SerialClient(port, baud)
-            client.run()
-        except KeyboardInterrupt:
-            break
-        except SerialException:
-            time.sleep(1.0)
-            continue
-        except OSError:
-            time.sleep(1.0)
-            continue
-        except:
-            _logger.warning("Unexpected Error: %s" % sys.exc_info()[0])
-            client.port.close()
-            time.sleep(1.0)
-            continue
-
-
-if "__main__" == __name__:
-    main()
