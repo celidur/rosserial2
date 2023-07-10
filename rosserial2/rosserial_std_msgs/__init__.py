@@ -13,3 +13,6 @@ from .UInt8 import UInt8
 from .UInt16 import UInt16
 from .UInt32 import UInt32
 from .UInt64 import UInt64
+from .MultiArrayLayout import MultiArrayLayout
+from .MultiArrayDimension import MultiArrayDimension
+from .Float64MultiArray import Float64MultiArray
