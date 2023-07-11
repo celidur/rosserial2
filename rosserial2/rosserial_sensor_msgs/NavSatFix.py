@@ -1,8 +1,7 @@
 from .NavSatStatus import NavSatStatus
 from .. import rosserial_std_msgs as std_msgs
-import rosserial2 as ros2
 
-# TODO : implement Arrays first in std_msgs
+
 class NavSatFix:
     def __init__(self):
         self.header = std_msgs.Header()
@@ -10,7 +9,7 @@ class NavSatFix:
         self.latitude = std_msgs.Float64()
         self.longitude = std_msgs.Float64()
         self.altitude = std_msgs.Float64()
-        self.position_covariance = [std_msgs.Float64() for i in range(9)]
+        self.position_covariance = [std_msgs.Float64() for _ in range(9)]
         self.position_covariance_type = std_msgs.UInt8()
 
     def serialize(self, message=None):
