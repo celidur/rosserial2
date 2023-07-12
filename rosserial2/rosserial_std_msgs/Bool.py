@@ -8,7 +8,7 @@ class Bool:
 
     def serialize(self, message=None):
         if message is not None:
-            self.data = message.data
+            self.set(message)
         return struct.pack('?', self.data)
 
     def deserialize(self, data):
@@ -18,7 +18,7 @@ class Bool:
     def __dict__(self):
         return {'data': self.data}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.data = value.data
 
     def __hash__(self):

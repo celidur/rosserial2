@@ -2,18 +2,17 @@ from .. import rosserial_std_msgs as std_msgs
 from .. import rosserial_geometry_msgs as geometry_msgs
 
 
-class MagneticField:
+class Acel:
     def __init__(self):
-        self.header = std_msgs.Header()
-        self.magnetic_field = geometry_msgs.Vector3()
-        self.magnetic_field_covariance = [std_msgs.Float64() for _ in range(9)]
+        self.linear = geometry_msgs.Vector3()
+        self.angular = geometry_msgs.Vector3()
 
     def serialize(self, message=None):
-        if message is not None:
-            self.set(message)
-        bytes_ = self.header.serialize() + self.magnetic_field.serialize()
+        if message is None:
+            message = self
+        bytes_ = self.header.serialize(message.header) + self.magnetic_field.serialize(message.orientation)
         for i in range(9):
-            bytes_ += self.magnetic_field_covariance[i].serialize()
+            bytes_ += self.magnetic_field_covariance[i].serialize(message.magnetic_field_covariance[i])
         return bytes_
 
     def deserialize(self, data):
@@ -29,8 +28,8 @@ class MagneticField:
                 'magnetic_field_covariance': [i.data for i in self.magnetic_field_covariance]}
 
     def set(self, value):
-        self.header.set(value.header)
-        self.magnetic_field.set(value.magnetic_field)
+        self.header = value.header
+        self.magnetic_field = value.magnetic_field
         for i in range(9):
             self.magnetic_field_covariance[i].data = value.magnetic_field_covariance[i]
 

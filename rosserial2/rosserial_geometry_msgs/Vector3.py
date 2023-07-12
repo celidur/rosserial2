@@ -7,8 +7,8 @@ class Vector3:
         self.z = std_msgs.Float64()
 
     def serialize(self, message=None):
-        if message is None:
-            message = self
+        if message is not None:
+            self.set(message)
         return self.x.serialize() + self.y.serialize() + self.z.serialize()
 
     def deserialize(self, data):
@@ -21,7 +21,7 @@ class Vector3:
     def __dict__(self):
         return {"x": self.x.data, "y": self.y.data, "z": self.z.data}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.x.data = value.x
         self.y.data = value.y
         self.z.data = value.z

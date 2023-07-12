@@ -19,12 +19,12 @@ class MultiArrayLayout:
         return offset
 
     def serialize(self, message=None):
-        if message is None:
-            message = self
-        bytes_msg = self.dim_length.serialize(message.dim_length)
-        for i in range(message.dim_length):
-            bytes_msg += self.dim[i].serialize(message.dim[i])
-        bytes_msg += self.data_offset.serialize(message.data_offset)
+        if message is not None:
+            self.set(message)
+        bytes_msg = self.dim_length.serialize()
+        for i in range(self.dim_length.data):
+            bytes_msg += self.dim[i].serialize()
+        bytes_msg += self.data_offset.serialize()
         return bytes_msg
 
     def __dict__(self):
@@ -39,7 +39,8 @@ class MultiArrayLayout:
         return {'dim': dim,
                 'data_offset': self.data_offset.data}
 
-    def __set__(self, instance, value):
+    # TODO: Check if this is correct
+    def set(self, value):
         self.dim_length.data = value.dim_length
         self.dim = value.dim
         self.data_offset.data = value.data_offset

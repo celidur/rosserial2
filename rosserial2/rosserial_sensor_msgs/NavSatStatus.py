@@ -7,9 +7,8 @@ class NavSatStatus:
 
     def serialize(self, message=None):
         if message is not None:
-            self.satus.data = message.status
-            self.service.data = message.service
-        return self.satus.serialize() + self.service.serialize()
+            self.set(message)
+        return self.status.serialize() + self.service.serialize()
 
     def deserialize(self, data):
         offset = 0
@@ -20,7 +19,7 @@ class NavSatStatus:
     def __dict__(self):
         return {'status': self.status.data, 'service': self.service.data}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.status.data = value.status
         self.service.data = value.service
 

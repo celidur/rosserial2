@@ -1,4 +1,5 @@
 from .UInt32 import UInt32
+import rosserial2 as ros2
 
 class Time:
     def __init__(self):
@@ -7,8 +8,7 @@ class Time:
 
     def serialize(self, message=None):
         if message is not None:
-            self.sec.data = message.sec
-            self.nanosec.data = message.nanosec
+            self.set(message)
         return self.sec.serialize() + self.nanosec.serialize()
 
     def deserialize(self, data):
@@ -20,7 +20,7 @@ class Time:
     def __dict__(self):
         return {'sec': self.sec.data, 'nanosec': self.nanosec.data}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.nanosec.data = value.nanosec
         self.sec.data = value.sec
 

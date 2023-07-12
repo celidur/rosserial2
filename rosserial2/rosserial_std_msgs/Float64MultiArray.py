@@ -37,7 +37,7 @@ class Float64MultiArray:
         return {'layout': self.layout.__dict__(),
                 'data': [f.data for f in self.data]}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.layout = value.layout
         self.data_length.data = len(value.data)
         self.data = [Float64() for _ in range(len(value.data))]

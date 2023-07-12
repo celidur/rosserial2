@@ -8,10 +8,9 @@ class Temperature:
         self.variance = std_msgs.Float64()
 
     def serialize(self, message=None):
-        if message is None:
-            message = self
-        return self.header.serialize(message.header) + self.temperature.serialize(
-            message.temperature) + self.variance.serialize(message.variance)
+        if message is not None:
+            self.set(message)
+        return self.header.serialize() + self.temperature.serialize() + self.variance.serialize()
 
     def deserialize(self, data):
         offset = 0
@@ -24,8 +23,8 @@ class Temperature:
         return {"header": self.header.__dict__(), "temperature": self.temperature.data,
                 "variance": self.variance.data}
 
-    def __set__(self, instance, value):
-        self.header = value.header
+    def set(self, value):
+        self.header.set(value.header)
         self.temperature.data = value.temperature
         self.variance.data = value.variance
 

@@ -10,6 +10,7 @@ import rosserial2 as ros2
 from .Subscriber import Subscriber
 from .Publisher import Publisher
 from .rosserial_msgs import TopicInfo
+import rosserial2.rosserial_std_msgs as std_msgs
 
 ERROR_MISMATCHED_PROTOCOL = "Mismatched protocol version in packet: lost sync or rosserial_python is from different ros release than the rosserial client"
 ERROR_NO_SYNC = "no sync with device"
@@ -466,6 +467,9 @@ class SerialClient(object):
 
     def handleTimeRequest(self, data: bytes):
         """ Respond to device with system time. """
+        # t = std_msgs.Time()
+        # t = ros2._time.now().to_msg()
+        # ros2._logger.info("handleTimeRequest: %s"% str(t.__dict__()))
         a = time.time_ns()
         res = (a // (10 ** 9)).to_bytes(4, byteorder='little') + (a % (10 ** 9)).to_bytes(4, byteorder='little')
         self.send(TopicInfo.ID_TIME, res)

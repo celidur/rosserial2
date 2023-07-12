@@ -7,7 +7,7 @@ class Int32:
 
     def serialize(self, message=None):
         if message is not None:
-            self.data = message.data
+            self.set(message)
         return struct.pack('i', self.data)
 
     def deserialize(self, data):  # return offset
@@ -17,7 +17,7 @@ class Int32:
     def __dict__(self):
         return {'data': self.data}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.data = value.data
 
     def __hash__(self):

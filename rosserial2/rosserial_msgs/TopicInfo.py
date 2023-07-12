@@ -38,7 +38,7 @@ class TopicInfo:
                 'md5sum': self.md5sum.data,
                 'buffer_size': self.buffer_size.data}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.topic_id.data = value.topic_id.data
         self.topic_name.data = value.topic_name.data
         self.message_type.data = value.message_type.data

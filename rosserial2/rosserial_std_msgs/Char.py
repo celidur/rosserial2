@@ -7,7 +7,7 @@ class Char:
 
     def serialize(self, message=None):
         if message is not None:
-            self.data.data = message.data
+            self.set(message)
         return self.data.serialize()
 
     def deserialize(self, data):
@@ -18,7 +18,7 @@ class Char:
     def __dict__(self):
         return {'data': self.data.data}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.data = value
 
     def __hash__(self):

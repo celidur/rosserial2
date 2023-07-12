@@ -14,7 +14,6 @@ class Publisher:
         package, message = topic_info.message_type.data.split('/')
         # self.manage = getRosType(package, message, topic_info.message_type)
         self.message = RosType(package, message)
-
         if hash(self.message) == hash(topic_info):
             self.publisher = ros2._node.create_publisher(
                 self.message.message_type,

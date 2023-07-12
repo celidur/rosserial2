@@ -13,12 +13,14 @@ class NavSatFix:
         self.position_covariance_type = std_msgs.UInt8()
 
     def serialize(self, message=None):
-        if message is None:
-            message = self
-        return self.header.serialize(message.header) + self.status.serialize(message.status) + self.latitude.serialize(
-            message.latitude) + self.longitude.serialize(message.longitude) + self.altitude.serialize(
-            message.altitude) + self.position_covariance.serialize(
-            message.position_covariance) + self.position_covariance_type.serialize(message.position_covariance_type)
+        if message is not None:
+            self.set(message)
+        bytes_ = self.header.serialize() + self.status.serialize() + self.latitude.serialize() + \
+                 self.longitude.serialize() + self.altitude.serialize()
+        for i in range(9):
+            bytes_ += self.position_covariance[i].serialize()
+        bytes_ += self.position_covariance_type.serialize()
+        return bytes_
 
     def deserialize(self, data):
         offset = 0
@@ -39,13 +41,14 @@ class NavSatFix:
                 "altitude": self.altitude.data, "position_covariance": [i.data for i in self.position_covariance],
                 "position_covariance_type": self.position_covariance_type.data}
 
-    def __set__(self, instance, value):
-        self.header = value.header
-        self.status = value.status
+    def set(self, value):
+        self.header.set(value.header)
+        self.status.set(value.status)
         self.latitude.data = value.latitude
         self.longitude.data = value.longitude
         self.altitude.data = value.altitude
-        self.position_covariance = value.position_covariance
+        for i in range(9):
+            self.position_covariance[i].data = value.position_covariance[i]
         self.position_covariance_type.data = value.position_covariance_type
 
     def __hash__(self):

@@ -11,6 +11,7 @@ from .SerialClient import SerialClient
 _node = None
 _logger = None
 _on_shutdown = None
+_time = None
 
 
 def _thread_spin_target():
@@ -21,7 +22,7 @@ def _thread_spin_target():
 
 
 def main():
-    global _node, _logger
+    global _node, _logger, _time
     rclpy.init()
     _node = rclpy.create_node(
         "serial_node",
@@ -30,6 +31,7 @@ def main():
     )
 
     _logger = _node.get_logger()
+    _time = _node.get_clock()
     rclpy.logging.set_logger_level(_logger.name, rclpy.logging.LoggingSeverity.INFO)
     _thread_spin = threading.Thread(target=_thread_spin_target, daemon=True)
     _thread_spin.start()

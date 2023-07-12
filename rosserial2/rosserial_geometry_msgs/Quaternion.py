@@ -8,8 +8,8 @@ class Quaternion:
         self.w = std_msgs.Float64()
 
     def serialize(self, message=None):
-        if message is None:
-            message = self
+        if message is not None:
+            self.set(message)
         return self.x.serialize() + self.y.serialize() + self.z.serialize() + self.w.serialize()
 
     def deserialize(self, data):
@@ -23,7 +23,7 @@ class Quaternion:
     def __dict__(self):
         return {"x": self.x.data, "y": self.y.data, "z": self.z.data, "w": self.w.data}
 
-    def __set__(self, instance, value):
+    def set(self, value):
         self.x.data = value.x
         self.y.data = value.y
         self.z.data = value.z

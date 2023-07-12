@@ -2,6 +2,7 @@ import rosserial2 as ros2
 from .LoadMsg import load_message
 import rosserial2.rosserial_sensor_msgs as sensor_msgs
 import rosserial2.rosserial_std_msgs as std_msgs
+import rosserial2.rosserial_geometry_msgs as geometry_msgs
 
 def getRosType(package, typeName):
     try:
