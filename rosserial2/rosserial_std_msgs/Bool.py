@@ -1,19 +1,18 @@
-import struct
-from typing import Union
+from ..fuction import *
 
 
 class Bool:
     def __init__(self):
-        self.data = 0
+        self.data: bool = False
 
     def serialize(self, message=None):
         if message is not None:
             self.set(message)
-        return struct.pack('?', self.data)
+        return serialization_bool(self.data)
 
-    def deserialize(self, data):
-        self.data = struct.unpack('?', data[0:1])[0]
-        return 1
+    def deserialize(self, data, offset=0):
+        offset, self.data = deserialization_bool(data, offset)
+        return offset
 
     def __dict__(self):
         return {'data': self.data}

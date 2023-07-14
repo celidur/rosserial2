@@ -1,18 +1,18 @@
-import struct
+from ..fuction import *
 
 
 class Float64:
     def __init__(self):
-        self.data = 0
+        self.data: float = 0
 
     def serialize(self, message=None):
         if message is not None:
             self.set(message)
-        return struct.pack('d', self.data)
+        return serialization_float64(self.data)
 
-    def deserialize(self, data):  # return offset
-        self.data = struct.unpack('d', data[0:8])[0]
-        return 8
+    def deserialize(self, data, offset=0):
+        offset, self.data = deserialization_float64(data, offset)
+        return offset
 
     def __dict__(self):
         return {'data': self.data}

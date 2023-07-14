@@ -1,5 +1,4 @@
-import rosserial2 as ros2
-from .. import rosserial_std_msgs as std_msgs
+from ..fuction import *
 
 
 class TopicInfo:
@@ -13,37 +12,42 @@ class TopicInfo:
     ID_TX_STOP = 11
 
     def __init__(self):
-        self.topic_id = std_msgs.UInt16()
-        self.topic_name = std_msgs.String()
-        self.message_type = std_msgs.String()
-        self.md5sum = std_msgs.String()
-        self.buffer_size = std_msgs.UInt32()
+        self.topic_id: int = 0
+        self.topic_name: str = ""
+        self.message_type: str = ""
+        self.md5sum: str = ""
+        self.buffer_size: int = 0
 
-    def serialize(self):
-        ros2._logger.warning('it is not implemented')
+    def serialize(self, message=None):
+        if message is not None:
+            self.set(message)
+        return serialization_uint16(self.topic_id) + \
+            serialization_string(self.topic_name) + \
+            serialization_string(self.message_type) + \
+            serialization_string(self.md5sum) + \
+            serialization_uint32(self.buffer_size)
 
-    def deserialize(self, data):
-        offset = 0
-        offset += self.topic_id.deserialize(data[offset:])
-        offset += self.topic_name.deserialize(data[offset:])
-        offset += self.message_type.deserialize(data[offset:])
-        offset += self.md5sum.deserialize(data[offset:])
-        offset += self.buffer_size.deserialize(data[offset:])
+    def deserialize(self, data, offset=0):
+        offset, self.topic_id = deserialization_uint16(data, offset)
+        offset, self.topic_name = deserialization_string(data, offset)
+        offset, self.message_type = deserialization_string(data, offset)
+        offset, self.md5sum = deserialization_string(data, offset)
+        offset, self.buffer_size = deserialization_uint32(data, offset)
         return offset
 
     def __dict__(self):
-        return {'topic_id': self.topic_id.data,
-                'topic_name': self.topic_name.data,
-                'message_type': self.message_type.data,
-                'md5sum': self.md5sum.data,
-                'buffer_size': self.buffer_size.data}
+        return {'topic_id': self.topic_id,
+                'topic_name': self.topic_name,
+                'message_type': self.message_type,
+                'md5sum': self.md5sum,
+                'buffer_size': self.buffer_size}
 
     def set(self, value):
-        self.topic_id.data = value.topic_id.data
-        self.topic_name.data = value.topic_name.data
-        self.message_type.data = value.message_type.data
-        self.md5sum.data = value.md5sum.data
-        self.buffer_size.data = value.buffer_size.data
+        self.topic_id = value.topic_id
+        self.topic_name = value.topic_name
+        self.message_type = value.message_type
+        self.md5sum = value.md5sum
+        self.buffer_size = value.buffer_size
 
     def __hash__(self):
-        return int("0x" + self.md5sum.data, 16)
+        return int("0x" + self.md5sum, 16)

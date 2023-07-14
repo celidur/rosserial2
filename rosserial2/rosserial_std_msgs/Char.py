@@ -1,22 +1,21 @@
-from .Int8 import Int8
+from ..fuction import *
 
 
 class Char:
     def __init__(self):
-        self.data = Int8()
+        self.data: int = 0
 
     def serialize(self, message=None):
         if message is not None:
             self.set(message)
-        return self.data.serialize()
+        return serialization_int8(self.data)
 
-    def deserialize(self, data):
-        offset = 0
-        offset += self.data.deserialize(data[offset:])
+    def deserialize(self, data, offset=0):
+        offset, self.data = deserialization_int8(data, offset)
         return offset
 
     def __dict__(self):
-        return {'data': self.data.data}
+        return {'data': self.data}
 
     def set(self, value):
         self.data = value

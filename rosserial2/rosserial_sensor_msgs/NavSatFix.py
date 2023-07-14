@@ -1,55 +1,55 @@
+from typing import List
+
 from .NavSatStatus import NavSatStatus
 from .. import rosserial_std_msgs as std_msgs
+from ..fuction import *
 
 
 class NavSatFix:
     def __init__(self):
-        self.header = std_msgs.Header()
-        self.status = NavSatStatus()
-        self.latitude = std_msgs.Float64()
-        self.longitude = std_msgs.Float64()
-        self.altitude = std_msgs.Float64()
-        self.position_covariance = [std_msgs.Float64() for _ in range(9)]
-        self.position_covariance_type = std_msgs.UInt8()
+        self.header: std_msgs.Header = std_msgs.Header()
+        self.status: NavSatStatus = NavSatStatus()
+        self.latitude: float = 0
+        self.longitude: float = 0
+        self.altitude: float = 0
+        self.position_covariance: List[float] = [0] * 9
+        self.position_covariance_type: int = 0
 
     def serialize(self, message=None):
         if message is not None:
             self.set(message)
-        bytes_ = self.header.serialize() + self.status.serialize() + self.latitude.serialize() + \
-                 self.longitude.serialize() + self.altitude.serialize()
+        bytes_ = self.header.serialize() + self.status.serialize() + serialization_float64(
+            self.latitude) + serialization_float64(self.longitude) + serialization_float64(self.altitude)
         for i in range(9):
-            bytes_ += self.position_covariance[i].serialize()
-        bytes_ += self.position_covariance_type.serialize()
+            bytes_ += serialization_float64(self.position_covariance[i])
+        bytes_ += serialization_uint8(self.position_covariance_type)
         return bytes_
 
-    def deserialize(self, data):
-        offset = 0
-        offset += self.header.deserialize(data[offset:])
-        offset += self.status.deserialize(data[offset:])
-        offset += self.latitude.deserialize(data[offset:])
-        offset += self.longitude.deserialize(data[offset:])
-        offset += self.altitude.deserialize(data[offset:])
+    def deserialize(self, data, offset=0):
+        offset = self.header.deserialize(data, offset)
+        offset = self.status.deserialize(data, offset)
+        offset, self.latitude = deserialization_float64(data, offset)
+        offset, self.longitude = deserialization_float64(data, offset)
+        offset, self.altitude = deserialization_float64(data, offset)
         for i in range(9):
-            offset += self.position_covariance[i].deserialize(data[offset:])
-        offset += self.position_covariance_type.deserialize(data[offset:])
-
+            offset, self.position_covariance[i] = deserialization_float64(data, offset)
+        offset, self.position_covariance_type = deserialization_uint8(data, offset)
         return offset
 
     def __dict__(self):
         return {"header": self.header.__dict__(), "status": self.status.__dict__(),
-                "latitude": self.latitude.data, "longitude": self.longitude.data,
-                "altitude": self.altitude.data, "position_covariance": [i.data for i in self.position_covariance],
-                "position_covariance_type": self.position_covariance_type.data}
+                "latitude": self.latitude, "longitude": self.longitude,
+                "altitude": self.altitude, "position_covariance": self.position_covariance,
+                "position_covariance_type": self.position_covariance_type}
 
     def set(self, value):
         self.header.set(value.header)
         self.status.set(value.status)
-        self.latitude.data = value.latitude
-        self.longitude.data = value.longitude
-        self.altitude.data = value.altitude
-        for i in range(9):
-            self.position_covariance[i].data = value.position_covariance[i]
-        self.position_covariance_type.data = value.position_covariance_type
+        self.latitude = value.latitude
+        self.longitude = value.longitude
+        self.altitude = value.altitude
+        self.position_covariance = value.position_covariance
+        self.position_covariance_type = value.position_covariance_type
 
     def __hash__(self):
         return 0x2d3a8cd499b9b4a0249fb98fd05cfa48

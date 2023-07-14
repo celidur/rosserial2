@@ -1,37 +1,28 @@
-from .. import rosserial_std_msgs as std_msgs
-from .. import rosserial_geometry_msgs as geometry_msgs
+from .Vector3 import Vector3
 
 
-class Acel:
+class Accel:
     def __init__(self):
-        self.linear = geometry_msgs.Vector3()
-        self.angular = geometry_msgs.Vector3()
+        self.linear: Vector3 = Vector3()
+        self.angular: Vector3 = Vector3()
 
     def serialize(self, message=None):
-        if message is None:
-            message = self
-        bytes_ = self.header.serialize(message.header) + self.magnetic_field.serialize(message.orientation)
-        for i in range(9):
-            bytes_ += self.magnetic_field_covariance[i].serialize(message.magnetic_field_covariance[i])
-        return bytes_
+        if message is not None:
+            self.set(message)
+        return self.linear.serialize() + self.angular.serialize()
 
     def deserialize(self, data):
         offset = 0
-        offset += self.header.deserialize(data[offset:])
-        offset += self.magnetic_field.deserialize(data[offset:])
-        for i in range(9):
-            offset += self.magnetic_field_covariance[i].deserialize(data[offset:])
+        offset += self.linear.deserialize(data[offset:])
+        offset += self.angular.deserialize(data[offset:])
         return offset
 
     def __dict__(self):
-        return {'header': self.header.__dict__(), 'magnetic_field': self.magnetic_field.__dict__(),
-                'magnetic_field_covariance': [i.data for i in self.magnetic_field_covariance]}
+        return {'linear': self.linear.__dict__(), 'angular': self.angular.__dict__()}
 
     def set(self, value):
-        self.header = value.header
-        self.magnetic_field = value.magnetic_field
-        for i in range(9):
-            self.magnetic_field_covariance[i].data = value.magnetic_field_covariance[i]
+        self.linear = value.linear
+        self.angular = value.angular
 
     def __hash__(self):
-        return 0x2f3b0b43eed0c9501de0fa3ff89a45aa
+        return 0x9f195f881246fdfa2798d1d3eebca84a

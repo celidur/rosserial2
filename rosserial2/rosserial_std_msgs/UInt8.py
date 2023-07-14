@@ -1,18 +1,18 @@
-import struct
+from ..fuction import *
 
 
 class UInt8:
     def __init__(self):
-        self.data = 0
+        self.data: int = 0
 
     def serialize(self, message=None):
         if message is not None:
             self.set(message)
-        return struct.pack('B', self.data)
+        return serialization_uint8(self.data)
 
-    def deserialize(self, data):  # return offset
-        self.data = struct.unpack('B', data[0:1])[0]
-        return 1
+    def deserialize(self, data, offset=0):
+        offset, self.data = deserialization_uint8(data, offset)
+        return offset
 
     def __dict__(self):
         return {'data': self.data}

@@ -1,18 +1,18 @@
-import struct
+from ..fuction import *
 
 
 class Int16:
     def __init__(self):
-        self.data = 0
+        self.data: int = 0
 
     def serialize(self, message=None):
         if message is not None:
             self.set(message)
-        return struct.pack('h', self.data)
+        return serialization_int16(self.data)
 
-    def deserialize(self, data):
-        self.data = struct.unpack('h', data[0:2])[0]
-        return 2
+    def deserialize(self, data, offset=0):
+        offset, self.data = deserialization_int16(data, offset)
+        return offset
 
     def __dict__(self):
         return {'data': self.data}

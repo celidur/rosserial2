@@ -9,7 +9,7 @@ from .LoadMsg import load_message
 import rosserial2 as ros2
 from .Subscriber import Subscriber
 from .Publisher import Publisher
-from .rosserial_msgs import TopicInfo
+from .rosserial_msgs import TopicInfo, Log
 import rosserial2.rosserial_std_msgs as std_msgs
 
 ERROR_MISMATCHED_PROTOCOL = "Mismatched protocol version in packet: lost sync or rosserial_python is from different ros release than the rosserial client"
@@ -467,12 +467,7 @@ class SerialClient(object):
 
     def handleTimeRequest(self, data: bytes):
         """ Respond to device with system time. """
-        # t = std_msgs.Time()
-        # t = ros2._time.now().to_msg()
-        # ros2._logger.info("handleTimeRequest: %s"% str(t.__dict__()))
-        a = time.time_ns()
-        res = (a // (10 ** 9)).to_bytes(4, byteorder='little') + (a % (10 ** 9)).to_bytes(4, byteorder='little')
-        self.send(TopicInfo.ID_TIME, res)
+        self.send(TopicInfo.ID_TIME, std_msgs.Time().serialize(ros2._time().to_msg()))
         self.lastsync = time.time()
 
     # TODO: implement
@@ -513,22 +508,20 @@ class SerialClient(object):
         # resp.serialize(data_buffer)
         # self.send(TopicInfo.ID_PARAMETER_REQUEST, data_buffer.getvalue())
 
-    # TODO: implement
     def handleLoggingRequest(self, data: bytes):
         """ Forward logging information from serial device into ROS. """
-        ros2._logger.error("handleLoggingRequest :" + str(data))
-        # msg = Log()
-        # msg.deserialize(data)
-        # if msg.level == Log.ROSDEBUG:
-        #     rospy.logdebug(msg.msg)
-        # elif msg.level == Log.INFO:
-        #     print(msg.msg)
-        # elif msg.level == Log.WARN:
-        #     print(msg.msg)
-        # elif msg.level == Log.ERROR:
-        #     print(msg.msg)
-        # elif msg.level == Log.FATAL:
-        #     rospy.logfatal(msg.msg)
+        msg = Log()
+        msg.deserialize(data)
+        if msg.level == Log.ROSDEBUG:
+            ros2._logger.debug(msg.msg)
+        elif msg.level == Log.INFO:
+            ros2._logger.info(msg.msg)
+        elif msg.level == Log.WARN:
+            ros2._logger.warning(msg.msg)
+        elif msg.level == Log.ERROR:
+            ros2._logger.error(msg.msg)
+        elif msg.level == Log.FATAL:
+            ros2._logger.fatal(msg.msg)
 
     def send(self, topic, msg):
         """

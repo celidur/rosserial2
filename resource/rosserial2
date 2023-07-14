@@ -13,3 +13,13 @@ std_msgs
     -float64
     -string
     -bool
+
+
+test :
+ Quaternion
+ vector3
+ Imu
+ MagneticField
+ Temperature
+ Arrays
+

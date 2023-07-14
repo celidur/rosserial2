@@ -1,30 +1,30 @@
-from .. import rosserial_std_msgs as std_msgs
+from ..fuction import *
+
 
 class Vector3:
     def __init__(self):
-        self.x = std_msgs.Float64()
-        self.y = std_msgs.Float64()
-        self.z = std_msgs.Float64()
+        self.x: float = 0
+        self.y: float = 0
+        self.z: float = 0
 
     def serialize(self, message=None):
         if message is not None:
             self.set(message)
-        return self.x.serialize() + self.y.serialize() + self.z.serialize()
+        return serialization_float64(self.x) + serialization_float64(self.y) + serialization_float64(self.z)
 
-    def deserialize(self, data):
-        offset = 0
-        offset += self.x.deserialize(data[offset:])
-        offset += self.y.deserialize(data[offset:])
-        offset += self.z.deserialize(data[offset:])
+    def deserialize(self, data, offset=0):
+        offset, self.x = deserialization_float64(data, offset)
+        offset, self.y = deserialization_float64(data, offset)
+        offset, self.z = deserialization_float64(data, offset)
         return offset
 
     def __dict__(self):
-        return {"x": self.x.data, "y": self.y.data, "z": self.z.data}
+        return {"x": self.x, "y": self.y, "z": self.z}
 
     def set(self, value):
-        self.x.data = value.x
-        self.y.data = value.y
-        self.z.data = value.z
+        self.x = value.x
+        self.y = value.y
+        self.z = value.z
 
     def __hash__(self):
         return 0x4a842b65f413084dc2b10fb484ea7f17

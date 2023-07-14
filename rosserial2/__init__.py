@@ -23,15 +23,16 @@ def _thread_spin_target():
 
 def main():
     global _node, _logger, _time
+    name_node = "serial_node"
     rclpy.init()
     _node = rclpy.create_node(
-        "serial_node",
+        name_node,
         allow_undeclared_parameters=True,
         automatically_declare_parameters_from_overrides=True,
     )
 
     _logger = _node.get_logger()
-    _time = _node.get_clock()
+    _time = _node.get_clock().now
     rclpy.logging.set_logger_level(_logger.name, rclpy.logging.LoggingSeverity.INFO)
     _thread_spin = threading.Thread(target=_thread_spin_target, daemon=True)
     _thread_spin.start()
@@ -46,6 +47,9 @@ def main():
     if not _node.has_parameter("baud"):
         _node.declare_parameter("baud", baud)
     baud = int(_node.get_parameter("baud")._value)
+
+    client = SerialClient(port, baud)
+    client.run()
 
     while rclpy.ok():
         _logger.info("Connecting to %s at %d baud" % (port, baud))

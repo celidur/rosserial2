@@ -1,28 +1,27 @@
-from .UInt32 import UInt32
-import rosserial2 as ros2
+from ..fuction import *
+
 
 class Time:
     def __init__(self):
-        self.sec = UInt32()
-        self.nanosec = UInt32()
+        self.sec: int = 0
+        self.nanosec: int = 0
 
     def serialize(self, message=None):
         if message is not None:
             self.set(message)
-        return self.sec.serialize() + self.nanosec.serialize()
+        return serialization_uint32(self.sec) + serialization_uint32(self.nanosec)
 
-    def deserialize(self, data):
-        offset = 0
-        offset += self.sec.deserialize(data[offset:])
-        offset += self.nanosec.deserialize(data[offset:])
+    def deserialize(self, data, offset=0):
+        offset, self.sec = deserialization_uint32(data, offset)
+        offset, self.nanosec = deserialization_uint32(data, offset)
         return offset
 
     def __dict__(self):
-        return {'sec': self.sec.data, 'nanosec': self.nanosec.data}
+        return {'sec': self.sec, 'nanosec': self.nanosec}
 
     def set(self, value):
-        self.nanosec.data = value.nanosec
-        self.sec.data = value.sec
+        self.nanosec = value.nanosec
+        self.sec = value.sec
 
     def __hash__(self):
         return 0xcd7166c74c552c311fbcc2fe5a7bc289
