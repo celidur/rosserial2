@@ -48,9 +48,6 @@ def main():
         _node.declare_parameter("baud", baud)
     baud = int(_node.get_parameter("baud")._value)
 
-    client = SerialClient(port, baud)
-    client.run()
-
     while rclpy.ok():
         _logger.info("Connecting to %s at %d baud" % (port, baud))
         try:
@@ -64,8 +61,8 @@ def main():
         except OSError:
             time.sleep(1.0)
             continue
-        except:
-            _logger.warning("Unexpected Error: %s" % sys.exc_info()[0])
-            client.port.close()
-            time.sleep(1.0)
-            continue
+        # except:
+        #     _logger.warning("Unexpected Error: %s" % sys.exc_info()[0])
+        #     client.port.close()
+        #     time.sleep(1.0)
+        #     continue

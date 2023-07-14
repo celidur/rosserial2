@@ -353,10 +353,10 @@ class SerialClient(object):
             msg = TopicInfo()
             msg.deserialize(data)
             pub = Publisher(msg)
-            self.publishers[msg.topic_id.data] = pub
-            self.callbacks[msg.topic_id.data] = pub.handlePacket
-            self.setPublishSize(msg.buffer_size.data)
-            ros2._logger.info("Setup publisher on %s [%s]" % (msg.topic_name.data, msg.message_type.data))
+            self.publishers[msg.topic_id] = pub
+            self.callbacks[msg.topic_id] = pub.handlePacket
+            self.setPublishSize(msg.buffer_size)
+            ros2._logger.info("Setup publisher on %s [%s]" % (msg.topic_name, msg.message_type))
         except Exception as e:
             ros2._logger.error("Creation of publisher failed: %s" % e)
 
@@ -365,19 +365,19 @@ class SerialClient(object):
         try:
             msg = TopicInfo()
             msg.deserialize(data)
-            if not msg.topic_name.data in list(self.subscribers.keys()):
+            if not msg.topic_name in list(self.subscribers.keys()):
                 sub = Subscriber(msg, self)
-                self.subscribers[msg.topic_name.data] = sub
-                self.setSubscribeSize(msg.buffer_size.data)
-                ros2._logger.info("Setup subscriber on %s [%s]" % (msg.topic_name.data, msg.message_type.data))
-            elif msg.message_type.data != self.subscribers[msg.topic_name].message.type():
-                old_message_type = self.subscribers[msg.topic_name.data].manage._type
-                self.subscribers[msg.topic_name.data].unregister()
+                self.subscribers[msg.topic_name] = sub
+                self.setSubscribeSize(msg.buffer_size)
+                ros2._logger.info("Setup subscriber on %s [%s]" % (msg.topic_name, msg.message_type))
+            elif msg.message_type != self.subscribers[msg.topic_name].message.type():
+                old_message_type = self.subscribers[msg.topic_name].manage._type
+                self.subscribers[msg.topic_name].unregister()
                 sub = Subscriber(msg, self)
-                self.subscribers[msg.topic_name.data] = sub
-                self.setSubscribeSize(msg.buffer_size.data)
+                self.subscribers[msg.topic_name] = sub
+                self.setSubscribeSize(msg.buffer_size)
                 ros2._logger.info("Change the message type of subscriber on %s from [%s] to [%s]" % (
-                    msg.topic_name.data, old_message_type, msg.message_type.data))
+                    msg.topic_name, old_message_type, msg.message_type))
         except Exception as e:
             ros2._logger.error("Creation of subscriber failed: %s", e)
 
