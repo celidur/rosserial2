@@ -352,11 +352,20 @@ class SerialClient(object):
         try:
             msg = TopicInfo()
             msg.deserialize(data)
-            pub = Publisher(msg)
-            self.publishers[msg.topic_id] = pub
-            self.callbacks[msg.topic_id] = pub.handlePacket
-            self.setPublishSize(msg.buffer_size)
-            ros2._logger.info("Setup publisher on %s [%s]" % (msg.topic_name, msg.message_type))
+            if msg.topic_id not in self.publishers:
+                pub = Publisher(msg)
+                self.publishers[msg.topic_id] = pub
+                self.callbacks[msg.topic_id] = pub.handlePacket
+                self.setPublishSize(msg.buffer_size)
+                ros2._logger.info("Setup publisher on %s [%s]" % (msg.topic_name, msg.message_type))
+            elif msg.message_type != self.publishers[msg.topic_id].message.type():
+                old_message_type = self.publishers[msg.topic_id].message.type()
+                self.publishers[msg.topic_id].unregister()
+                pub = Publisher(msg)
+                self.publishers[msg.topic_id] = pub
+                self.callbacks[msg.topic_id] = pub.handlePacket
+                ros2._logger.info("Change the message type of publisher on %s from [%s] to [%s]" % (
+                    msg.topic_name, old_message_type, msg.message_type))
         except Exception as e:
             ros2._logger.error("Creation of publisher failed: %s" % e)
 
@@ -365,7 +374,7 @@ class SerialClient(object):
         try:
             msg = TopicInfo()
             msg.deserialize(data)
-            if not msg.topic_name in list(self.subscribers.keys()):
+            if msg.topic_name not in self.subscribers:
                 sub = Subscriber(msg, self)
                 self.subscribers[msg.topic_name] = sub
                 self.setSubscribeSize(msg.buffer_size)
