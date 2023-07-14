@@ -314,6 +314,7 @@ class SerialClient(object):
                 if checksum % 256 == 255:
                     self.synced = True
                     self.lastsync_success = time.time()
+                    self.lastsync = time.time()
                     try:
                         self.callbacks[topic_id](msg)
                     except KeyError:
