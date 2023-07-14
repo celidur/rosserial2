@@ -114,7 +114,7 @@ class SerialClient(object):
     protocol_ver2 = b'\xfe'
     protocol_ver = protocol_ver2
 
-    def __init__(self, port=None, baud=500000, timeout=5.0):
+    def __init__(self, port=None, baud=500000, timeout=2.0):
         """ Initialize node, connect to bus, attempt to negotiate topics. """
         self.read_lock = threading.RLock()
 
@@ -233,12 +233,11 @@ class SerialClient(object):
         # Handle reading.
         read_step = None
         while rclpy.ok():
-            if (time.time() - self.lastsync) > (self.timeout * 3):
+            if (time.time() - self.lastsync) > (self.timeout):
                 if self.synced:
-                    ros2._logger.error("Lost sync with device, restarting...")
+                    ros2._logger.warning("Resynchronizing with device...")
                 else:
-                    ros2._logger.error(
-                        "Unable to sync with device; possible link problem or link software version mismatch such as hydro rosserial_python with groovy Arduino")
+                    ros2._logger.error("The device is not communicating or the baud rate is not correct.")
                 self.lastsync_lost = time.time()
                 # self.sendDiagnostics(diagnostic_msgs.msg.DiagnosticStatus.ERROR, ERROR_NO_SYNC)
                 self.requestTopics()
