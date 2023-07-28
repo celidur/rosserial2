@@ -23,7 +23,13 @@ def _thread_spin_target():
 
 def main():
     global _node, _logger, _time
-    name_node = "serial_node"
+    name_node = None
+    for i in sys.argv:
+        if i.startswith("__node:="):
+            name_node = i[8:]
+            break
+    if name_node is None:
+        name_node = "serial_node"
     rclpy.init()
     _node = rclpy.create_node(
         name_node,
@@ -36,7 +42,7 @@ def main():
     rclpy.logging.set_logger_level(_logger.name, rclpy.logging.LoggingSeverity.INFO)
     _thread_spin = threading.Thread(target=_thread_spin_target, daemon=True)
     _thread_spin.start()
-    _logger.info("ROS Serial Python Node")
+    _logger.info(f"ROS Serial Python Node : {name_node}")
 
     port = '/dev/ttyUSB0'
     if not _node.has_parameter("port"):
